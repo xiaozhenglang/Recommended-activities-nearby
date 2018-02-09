@@ -22,6 +22,7 @@ import db.DBConnectionFactory;
 import external.TicketMasterAPI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Servlet implementation class SearchItem
@@ -46,20 +47,22 @@ public class SearchItem extends HttpServlet {
 		double lat = Double.parseDouble(request.getParameter("lat"));
 		double lon = Double.parseDouble(request.getParameter("lon"));
 		// Term can be empty or null.
-	//	String term = request.getParameter("term");
-//		TicketMasterAPI tmAPI = new TicketMasterAPI();
-//		List<Item> items = tmAPI.search(lat, lon, term);
 		String term = request.getParameter("term");
+		String userId = request.getParameter("user_id");
 
-		DBConnection connenction = DBConnectionFactory.getDBConnection();
-		List<Item> items = connenction.searchItems(lat, lon, term);
-
+		DBConnection conn = DBConnectionFactory.getDBConnection();
+		List<Item> items = conn.searchItems(lat, lon, term);
 		List<JSONObject> list = new ArrayList<>();
-		
+
+		Set<String> favorite = conn.getFavoriteItemIds(userId);
 		try {
 			for (Item item : items) {
-				// Add a thin version of item object
+				// Add a thin version of restaurant object
 				JSONObject obj = item.toJSONObject();
+				// Check if this is a favorite one.
+				// This field is required by frontend to correctly display favorite items.
+				obj.put("favorite", favorite.contains(item.getItemId()));
+
 				list.add(obj);
 			}
 		} catch (Exception e) {
